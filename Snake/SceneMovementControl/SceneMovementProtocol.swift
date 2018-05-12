@@ -9,12 +9,27 @@
 import Foundation
 
 enum MovementDirection {
-    case top
-    case buttom
+    case up
+    case down
     case left
     case right
+    
+    var asix:Asix {
+        switch self {
+        case .up,.down:
+            return .y
+        case .left,.right:
+            return .x
+        }
+    }
+    
+    enum Asix {
+        case x
+        case y
+    }
+    
 }
 
-protocol SceneMovementProtocol {
+protocol SceneMovementProtocol:class {
     func move(to direction:MovementDirection)
 }
