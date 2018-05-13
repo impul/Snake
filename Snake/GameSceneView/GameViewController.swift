@@ -12,23 +12,22 @@ import GameplayKit
 
 class GameViewController: UIViewController, SceneMovementProtocol {
     
-    private var moventController:ControllerProtocol?
+    private weak var moventController:ControllerProtocol?
     private var scene:GameSceneView?
     private var snakeBody:[Point] = []
     private var fruits:[Point] = []
     private var barriers:[Point] = []
     private var snake:Snake = Snake()
     private var currectDirection:MovementDirection = .down
-    
     private var timer:Timer?
-    private var gridSize:Int = 11
     
-    public var level:Int = 2
-    public var gamePoint:Int = 0
+    var gridSize:Int = 11
+    var level:Int = 2
+    var gamePoint:Int = 0
     
-    //MARK: - IBOutlet
+    weak var delegate:GameControllerDelegate?
     
-    @IBOutlet weak var startButton: UIButton!
+    var scenary = GameScenary()
     
     //MARK: - Lifecycle
     
@@ -37,6 +36,13 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         setupScene()
         setupMovementController()
         setupBarriers()
+        setupGame()
+    }
+    
+    func setupGame() {
+        snakeBody = [Point(x:0,y:0)]
+        timer = Timer.scheduledTimer(withTimeInterval: snake.speed, repeats: true, block:snakePrepareNextMovement)
+        addNewFruit()
     }
     
     func setupBarriers() {
@@ -44,7 +50,8 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         for _ in 0..<barriersCount {
             let barrierPoint = randomPointAroundSnake()
             barriers.append(barrierPoint)
-            scene?.drawBarrier(at: barrierPoint)
+            let updateComponent = GameViewUpdateModel(point: barrierPoint, snake: snake)
+            drawOnScene(.barrier(updateComponent))
         }
     }
     
@@ -63,13 +70,11 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         view.presentScene(scene)
     }
     
-    //MARK: - Actions
+    //MARK: - Draw
     
-    @IBAction func startButtonAction(_ sender: UIButton) {
-        sender.isHidden = true
-        snakeBody = [Point(x:0,y:0)]
-        timer = Timer.scheduledTimer(withTimeInterval: snake.speed, repeats: true, block:snakePrepareNextMovement)
-        addNewFruit()
+    func drawOnScene(_ component:UpdateCompoment) {
+        scenary.comonents[Date().timeIntervalSince1970] = component
+        scene?.draw(component:component)
     }
     
     //MARK: - Movement
@@ -99,9 +104,11 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     
     //MARK: - Scene logic
     
-    private lazy var snakePrepareNextMovement:(Timer)->() = { _ in
+    private lazy var snakePrepareNextMovement:(Timer)->() = { [weak self] _ in
+        guard let `self` = self else { return }
         self.calculateSnakeNextPostion()
-        self.scene?.drawNewSnakeHead(at: self.snakeBody[0], snake: self.snake)
+        let updateComponent = GameViewUpdateModel(point: self.snakeBody[0], snake: self.snake)
+        self.drawOnScene(.snake(updateComponent))
     }
     
     private func randomPointAroundSnake() -> Point {
@@ -132,23 +139,27 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     func addNewFruit() {
         let fruitPoint = randomPointAroundSnake()
         fruits.append(fruitPoint)
-        scene?.drawFruit(at: fruitPoint)
+        let updateComponent = GameViewUpdateModel(point: fruitPoint, snake: snake)
+        drawOnScene(.fruit(updateComponent))
     }
     
     ///MAKR: - Check game over
     
     private func checkGameOver() {
         let isSnakeInGrid = abs(snakeBody[0].x) < (gridSize/2)+1 && abs(snakeBody[0].y) < (gridSize/2)+1
-        let snakeTouchedBarrier = barriers.contains(snakeBody[0])
+        let snakeEatBarrier = barriers.contains(snakeBody[0])
+        let snakeEatHimself = snakeBody.filter{ $0 == snakeBody[0] }.count > 1
         
-        if !isSnakeInGrid || snakeTouchedBarrier {
+        if !isSnakeInGrid || snakeEatBarrier || snakeEatHimself {
             gameOver()
         }
     }
     
     private func gameOver() {
         timer?.invalidate()
-        startButton.isHidden = false
+        guard let data = try? JSONEncoder().encode(scenary) else { return }
+        delegate?.gameControllerDidFinishGame(self, with:gamePoint, log: data)
+        dismiss(animated: true)
     }
     
     //MARK: - SceneMovementProtocol

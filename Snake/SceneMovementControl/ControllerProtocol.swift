@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol ControllerProtocol {
+protocol ControllerProtocol:class {
     var controllerAllowsRotation:Bool { get }
     func beginUpdates()
     func endUpdates()

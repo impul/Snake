@@ -7,7 +7,7 @@
 
 import CoreGraphics
 
-struct Snake {
+struct Snake:Codable {
     var lenght:Int = 4
     var headWidth:CGFloat = 10
     var speed:Double = 0.5

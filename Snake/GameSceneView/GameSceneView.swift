@@ -9,7 +9,7 @@
 import SpriteKit
 import GameplayKit
 
-enum GameComponents:String {
+fileprivate enum GameComponents:String {
     case snake
     case barrier
     case fruit
@@ -19,7 +19,7 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
     
     //MARK: Public
     
-    public var gridSize:Int = 21
+    public var gridSize:Int = 0
     
     //MARK: - Variables
     
@@ -35,32 +35,27 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
         self.physicsWorld.contactDelegate = self
     }
     
-    public func drawNewSnakeHead(at point:Point,snake:Snake) {
-        guard let snakeHead = blockObject.copy() as? SKShapeNode else { return }
-        snakeHead.position = CGPoint(x: CGFloat(point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(point.y) * self.size.width/CGFloat(gridSize))
-        snakeHead.run(SKAction.sequence([SKAction.wait(forDuration: Double(snake.lenght) * snake.speed),
-                                          SKAction.removeFromParent()]))
-        snakeHead.fillColor = .green
-        snakeHead.name = GameComponents.snake.rawValue
-        snakeHead.physicsBody?.isDynamic = false
-        addChild(snakeHead)
-    }
-    
-    public func drawFruit(at point:Point) {
-        guard let fruit = blockObject.copy() as? SKShapeNode else { return }
-        fruit.position = CGPoint(x: CGFloat(point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(point.y) * self.size.width/CGFloat(gridSize))
-        fruit.fillColor = .red
-        fruit.name = GameComponents.fruit.rawValue
-        fruit.run(SKAction.repeatForever(SKAction.sequence([SKAction.fadeOut(withDuration: 0.5),SKAction.fadeIn(withDuration: 0.1)])))
-        addChild(fruit)
-    }
-
-    public func drawBarrier(at point:Point) {
-        guard let barrier = blockObject.copy() as? SKShapeNode else { return }
-        barrier.position = CGPoint(x: CGFloat(point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(point.y) * self.size.width/CGFloat(gridSize))
-        barrier.fillColor = .lightGray
-        barrier.name = GameComponents.barrier.rawValue
-        addChild(barrier)
+    func draw(component:UpdateCompoment) {
+        guard let newBlock = blockObject.copy() as? SKShapeNode else { return }
+        switch component {
+        case .snake(let update):
+            newBlock.position = CGPoint(x: CGFloat(update.point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(update.point.y) * self.size.width/CGFloat(gridSize))
+            newBlock.run(SKAction.sequence([SKAction.wait(forDuration: Double(update.snake.lenght) * update.snake.speed),
+                                             SKAction.removeFromParent()]))
+            newBlock.fillColor = .green
+            newBlock.name = GameComponents.snake.rawValue
+            newBlock.physicsBody?.isDynamic = false
+        case .fruit(let update):
+            newBlock.position = CGPoint(x: CGFloat(update.point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(update.point.y) * self.size.width/CGFloat(gridSize))
+            newBlock.fillColor = .red
+            newBlock.name = GameComponents.fruit.rawValue
+            newBlock.run(SKAction.repeatForever(SKAction.sequence([SKAction.fadeOut(withDuration: 0.5),SKAction.fadeIn(withDuration: 0.1)])))
+        case .barrier(let update):
+            newBlock.position = CGPoint(x: CGFloat(update.point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(update.point.y) * self.size.width/CGFloat(gridSize))
+            newBlock.fillColor = .lightGray
+            newBlock.name = GameComponents.barrier.rawValue
+        }
+        addChild(newBlock)
     }
     
     private func drawBlockTemplate() {
@@ -78,6 +73,7 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
         if let grid = Grid(gridSize: gridSize) {
             grid.position = CGPoint(x: 0, y:0)
             grid.size = CGSize(width: frame.width, height: frame.width)
+            grid.alpha = 0.4
             addChild(grid)
         }
     }
@@ -91,10 +87,11 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
             switch component {
             case .fruit:
                 body.node!.run(SKAction.removeFromParent())
-            case .barrier,.snake:
+            case .barrier:
                 children.forEach({ (childe) in
                     childe.physicsBody?.affectedByGravity = true
                 })
+            default: return
             }
         }
     }

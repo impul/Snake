@@ -8,8 +8,7 @@
 
 import Foundation
 
-struct Point:Equatable {
+struct Point:Codable,Equatable {
     var x:Int
     var y:Int
-    
 }
