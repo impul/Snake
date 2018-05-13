@@ -16,7 +16,7 @@ class AccelerometerSceneMovement:ControllerProtocol {
     
     init(delegate:SceneMovementProtocol, movementInterval:TimeInterval) {
         self.delegate = delegate
-        cm.deviceMotionUpdateInterval = movementInterval/4
+        cm.deviceMotionUpdateInterval = movementInterval
     }
     
     //MARK: - ControllerProtocol

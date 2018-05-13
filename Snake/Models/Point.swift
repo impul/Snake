@@ -11,4 +11,17 @@ import Foundation
 struct Point:Codable,Equatable {
     var x:Int
     var y:Int
+    
+    mutating func updateWithDirection(_ direction:MovementDirection) {
+        switch direction {
+        case .up:
+            y += 1
+        case .down:
+            y -= 1
+        case .left:
+            x -= 1
+        case .right:
+            x += 1
+        }
+    }
 }
