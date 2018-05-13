@@ -10,11 +10,10 @@ import CoreMotion
 
 class AccelerometerSceneMovement:ControllerProtocol {
     
-    weak var delegate:SceneMovementProtocol?
+    private weak var delegate:SceneMovementProtocol?
     private let cm = CMMotionManager()
-    private var timer:Timer?
     
-    init(delegate:SceneMovementProtocol, movementInterval:TimeInterval) {
+    required init(delegate:SceneMovementProtocol, movementInterval:TimeInterval) {
         self.delegate = delegate
         cm.deviceMotionUpdateInterval = movementInterval
     }
@@ -37,7 +36,7 @@ class AccelerometerSceneMovement:ControllerProtocol {
     }
     
     func endUpdates() {
-        cm.startAccelerometerUpdates()
+        cm.stopDeviceMotionUpdates()
     }
     
     func degrees(_ radians:Double) -> Double {
@@ -47,5 +46,10 @@ class AccelerometerSceneMovement:ControllerProtocol {
     var controllerAllowsRotation:Bool {
         return false
     }
+    
+    static var isAvailable: Bool {
+        return CMMotionManager().isDeviceMotionAvailable
+    }
+    
     
 }

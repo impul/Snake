@@ -25,6 +25,7 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
     
     private var blockObject: SKShapeNode = SKShapeNode()
     private var viewFrame = CGRect.zero
+    private var counter:SKLabelNode?
     
     //MARK: - Lifecycle
     
@@ -34,6 +35,8 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
         drawBlockTemplate()
         self.physicsWorld.contactDelegate = self
     }
+    
+    //MARK: - Drawing
     
     func draw(component:UpdateCompoment) {
         guard let newBlock = blockObject.copy() as? SKShapeNode else { return }
@@ -90,10 +93,6 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
             default: return
             }
         }
-    }
-    
-    func didEnd(_ contact: SKPhysicsContact) {
-        
     }
     
 }

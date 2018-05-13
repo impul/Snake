@@ -2,7 +2,7 @@
 //  RGB+UIColor.swift
 //  Snake
 //
-//  Created by Pavlo Boiko on 11.05.18.
+//  Created  on 11.05.18.
 //  Copyright © 2018 DevChallenge. All rights reserved.
 //
 

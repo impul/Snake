@@ -8,9 +8,10 @@
 
 import UIKit
 import SpriteKit
-import GameplayKit
 
 class GameViewController: UIViewController, SceneMovementProtocol {
+    
+    //MARK: - Private
     
     private var moventControl:ControllerProtocol?
     private var scene:GameSceneView?
@@ -19,15 +20,20 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     private var barriers:[Point] = []
     private var snake:Snake = Snake()
     private var currectDirection:MovementDirection = .down
-    private var timer:Timer?
     
+    //MARK: - Public
+    
+    var control:MovementControls = .accelerometer
     var gridSize:Int = 11
     var level:Int = 2
     var gamePoint:Int = 0
-    
+    var scenary = GameScenary()
     weak var controllerDelegate:GameControllerDelegate?
     
-    var scenary = GameScenary()
+    //MARK: - IBOutlet
+    
+    @IBOutlet weak var score: UILabel!
+    @IBOutlet weak var pauseButton: UIButton!
     
     //MARK: - Lifecycle
     
@@ -38,6 +44,8 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         setupBarriers()
         setupGame()
     }
+    
+    //MARK: - Setup
     
     func setupGame() {
         snakeBody = [Point(x:0,y:0)]
@@ -55,8 +63,15 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     }
     
     func setupMovementController() {
+        self.snake.gridSize = gridSize
         self.snake.headWidth = self.view.bounds.size.width/CGFloat(gridSize)
-        moventControl = AccelerometerSceneMovement(delegate: self, movementInterval:snake.speed)
+        switch control {
+        case .accelerometer:
+            moventControl = AccelerometerSceneMovement(delegate: self, movementInterval: snake.speed)
+        case .gamepad:
+            moventControl = GamepadSceneMovement(delegate: self, movementInterval:snake.speed)
+        }
+        
         moventControl?.beginUpdates()
     }
     
@@ -69,6 +84,13 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         view.presentScene(scene)
     }
     
+    //MARK: - Action
+    
+    @IBAction func pauseAction(_ sender: UIButton) {
+        sender.isSelected = !sender.isSelected
+        sender.isSelected ? moventControl?.endUpdates() : moventControl?.beginUpdates()
+    }
+    
     //MARK: - Draw
     
     func drawOnScene(_ component:UpdateCompoment) {
@@ -76,16 +98,7 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         scene?.draw(component:component)
     }
     
-    //MARK: - Movement
-    
-    func calculateSnakeNextPostion() {
-        
-    }
-    
     //MARK: - Scene logic
-    
-    private lazy var snakePrepareNextMovement:(Timer)->() = { [weak self] _ in
-    }
     
     private func randomPointAroundSnake() -> Point {
         srandomdev()
@@ -99,7 +112,7 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         }
     }
     
-    ///MARK: - Check fruit eat
+    //MARK: - Check fruit eat
     
     func isSnakeEatFruit() -> Bool {
         if fruits.contains(snakeBody[0]) {
@@ -108,6 +121,7 @@ class GameViewController: UIViewController, SceneMovementProtocol {
             addNewFruit()
             gamePoint += 1
             snake.lenght += 1
+            score.text = "\(gamePoint)"
             return true
         }
         return false
@@ -128,12 +142,18 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         let snakeEatHimself = snakeBody.filter{ $0 == snakeBody[0] }.count > 1
         
         if !isSnakeInGrid || snakeEatBarrier || snakeEatHimself {
+            print("Snake out of grid \(!isSnakeInGrid)")
+            print("Snake eat barrier \(snakeEatBarrier)")
+            print("Snake eat himself \(snakeEatHimself)")
+            print("Snake: \(snakeBody)")
+            print("Barriers: \(barriers)")
+            print("Fruits: \(fruits)")
             gameOver()
         }
     }
     
     private func gameOver() {
-        timer?.invalidate()
+        moventControl?.endUpdates()
         guard let data = try? JSONEncoder().encode(scenary) else { return }
         controllerDelegate?.gameControllerDidFinishGame(self, with:gamePoint, log: data)
         dismiss(animated: true)
@@ -143,10 +163,11 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     
     internal func move(to direction: MovementDirection) {
         guard var newSnakePoint = snakeBody.first else { return }
-        if  snakeBody.count < 2 || (snakeBody.count >= 2 && newSnakePoint != snakeBody[1]) && currectDirection.asix != direction.asix {
+        if currectDirection.asix != direction.asix {
             currectDirection = direction
+            print(direction)
         }
-        newSnakePoint.updateWithDirection(direction)
+        newSnakePoint.updateWithDirection(currectDirection)
         snakeBody.insert(newSnakePoint, at: 0)
         
         if snakeBody.count > snake.lenght && !isSnakeEatFruit() {
