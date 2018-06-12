@@ -41,6 +41,7 @@ class StartController:UIViewController, GameControllerDelegate {
     func updateControls() {
         controlSegmentControl.setEnabled(AccelerometerSceneMovement.isAvailable, forSegmentAt: 0)
         controlSegmentControl.setEnabled(GamepadSceneMovement.isAvailable, forSegmentAt: 1)
+        
     }
     
     func updateScores() {
@@ -54,6 +55,7 @@ class StartController:UIViewController, GameControllerDelegate {
     
     @IBAction func playAction(_ sender: Any) {
         guard let gameVc = self.storyboard?.instantiateViewController(withIdentifier: "GameViewController") as? GameViewController,
+              controlSegmentControl.selectedSegmentIndex != -1,
               controlSegmentControl.isEnabledForSegment(at: controlSegmentControl.selectedSegmentIndex),
              let control = MovementControls(rawValue:controlSegmentControl.selectedSegmentIndex) else { return }
         gameVc.level = Int(levelSlider.value)

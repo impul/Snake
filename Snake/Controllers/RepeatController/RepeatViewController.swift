@@ -64,7 +64,9 @@ class RepeatViewController: UIViewController {
                     self.scene?.draw(component: component)
                 }
                 if fireTime == self.fireTimes.last {
-                    self.dismiss(animated: true)
+                    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1, execute: {
+                        self.dismiss(animated: true)
+                    })
                 }
             })
         }

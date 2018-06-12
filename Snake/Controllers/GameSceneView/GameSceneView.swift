@@ -8,11 +8,19 @@
 
 import SpriteKit
 import GameplayKit
+import AudioToolbox
 
 fileprivate enum GameComponents:String {
     case snake
     case barrier
     case fruit
+}
+
+fileprivate struct PhysicsCategory {
+    static let none      : UInt32 = 0
+    static let fruit     : UInt32 = 0b1
+    static let barrier   : UInt32 = 0b10
+    static let snake     : UInt32 = 0b11
 }
 
 class GameSceneView: SKScene,SKPhysicsContactDelegate {
@@ -47,16 +55,25 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
                                              SKAction.removeFromParent()]))
             newBlock.fillColor = .green
             newBlock.name = GameComponents.snake.rawValue
-            newBlock.physicsBody?.isDynamic = false
+            newBlock.physicsBody?.categoryBitMask = PhysicsCategory.snake
+            newBlock.physicsBody?.contactTestBitMask = PhysicsCategory.fruit ^ PhysicsCategory.barrier
+            newBlock.physicsBody?.collisionBitMask = PhysicsCategory.none
         case .fruit(let update):
             newBlock.position = CGPoint(x: CGFloat(update.point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(update.point.y) * self.size.width/CGFloat(gridSize))
             newBlock.fillColor = .red
             newBlock.name = GameComponents.fruit.rawValue
+            newBlock.physicsBody?.isDynamic = false
+            newBlock.physicsBody?.categoryBitMask = PhysicsCategory.fruit
+            newBlock.physicsBody?.contactTestBitMask = PhysicsCategory.snake
+            newBlock.physicsBody?.collisionBitMask = PhysicsCategory.none
         case .barrier(let update):
             newBlock.position = CGPoint(x: CGFloat(update.point.x) * self.size.width/CGFloat(gridSize), y: CGFloat(update.point.y) * self.size.width/CGFloat(gridSize))
             newBlock.fillColor = .lightGray
             newBlock.name = GameComponents.barrier.rawValue
             newBlock.physicsBody?.isDynamic = false
+            newBlock.physicsBody?.contactTestBitMask = PhysicsCategory.none
+            newBlock.physicsBody?.collisionBitMask = PhysicsCategory.snake
+            newBlock.physicsBody?.categoryBitMask = PhysicsCategory.barrier
         }
         addChild(newBlock)
     }
@@ -69,7 +86,8 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
         let blockSize = blockObject.frame.size
         blockObject.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: blockSize.width - 1, height: blockSize.height - 1))
         blockObject.physicsBody?.affectedByGravity = false
-        blockObject.physicsBody?.contactTestBitMask = blockObject.physicsBody?.collisionBitMask ?? 0
+        blockObject.physicsBody?.isDynamic = true
+        
     }
     
     private func drawArena() {
@@ -89,7 +107,11 @@ class GameSceneView: SKScene,SKPhysicsContactDelegate {
                   let component = GameComponents(rawValue:node) else { return }
             switch component {
             case .fruit:
-                body.node!.run(SKAction.removeFromParent())
+                AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
+                body.node?.removeFromParent()
+            case .barrier:
+                AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
+                AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
             default: return
             }
         }

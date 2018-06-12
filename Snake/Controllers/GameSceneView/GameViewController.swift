@@ -55,7 +55,7 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     func setupBarriers() {
         let barriersCount = level * gridSize/4
         for _ in 0..<barriersCount {
-            let barrierPoint = randomPointAroundSnake()
+            let barrierPoint = randomPointAroundSnake(withInset: 2)
             barriers.append(barrierPoint)
             let updateComponent = GameViewUpdateModel(point: barrierPoint, snake: snake)
             drawOnScene(.barrier(updateComponent))
@@ -100,11 +100,12 @@ class GameViewController: UIViewController, SceneMovementProtocol {
     
     //MARK: - Scene logic
     
-    private func randomPointAroundSnake() -> Point {
+    private func randomPointAroundSnake(withInset:Int = 0) -> Point {
         srandomdev()
+        let size = gridSize - withInset
         while true {
-            let x = (Int(arc4random()) % gridSize) - abs(gridSize/2)
-            let y = (Int(arc4random()) % gridSize) - abs(gridSize/2)
+            let x = (Int(arc4random()) % size) - abs(size/2)
+            let y = (Int(arc4random()) % size) - abs(size/2)
             let point = Point(x: x, y: y)
             if !snakeBody.contains(point) && !fruits.contains(point) && !barriers.contains(point) {
                 return point
@@ -165,7 +166,6 @@ class GameViewController: UIViewController, SceneMovementProtocol {
         guard var newSnakePoint = snakeBody.first else { return }
         if currectDirection.asix != direction.asix {
             currectDirection = direction
-            print(direction)
         }
         newSnakePoint.updateWithDirection(currectDirection)
         snakeBody.insert(newSnakePoint, at: 0)
